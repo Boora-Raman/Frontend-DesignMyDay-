@@ -29,16 +29,21 @@ const AddServiceModal = ({ venueId, onClose, onServicesAdded }) => {
         throw new Error("Authentication token missing. Please log in.");
       }
 
+      console.log("Fetching services with token:", token.substring(0, 10) + "...");
       const response = await axios.get("http://localhost:8085/services", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      console.log("Services response:", response.data);
       if (!Array.isArray(response.data)) {
         throw new Error("Invalid response format from services endpoint.");
       }
 
       setServices(response.data);
       setError("");
+      if (response.data.length === 0) {
+        toast.warn("No services found in the database.");
+      }
     } catch (error) {
       console.error("Error fetching services:", error);
       const message =
@@ -72,6 +77,7 @@ const AddServiceModal = ({ venueId, onClose, onServicesAdded }) => {
         return;
       }
 
+      console.log("Adding services:", selectedServices);
       await axios.post(
         `http://localhost:8085/venues/${venueId}/services`,
         selectedServices,
@@ -117,7 +123,7 @@ const AddServiceModal = ({ venueId, onClose, onServicesAdded }) => {
             <Alert color="danger">{error}</Alert>
           ) : services.length === 0 ? (
             <Alert color="info" className="text-center">
-              No services available. Please add services first.
+              No services available. Please contact the administrator to add services.
             </Alert>
           ) : (
             <ListGroup style={{ maxHeight: "300px", overflowY: "auto" }}>
@@ -158,7 +164,7 @@ const AddServiceModal = ({ venueId, onClose, onServicesAdded }) => {
           <Button
             color="primary"
             onClick={handleSave}
-            disabled={loading || selectedServices.length === 0}
+            disabled={loading || services.length === 0 || selectedServices.length === 0}
           >
             Save
           </Button>

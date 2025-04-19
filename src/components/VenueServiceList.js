@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Container,
   Card,
@@ -38,11 +38,12 @@ const decodeJWT = (token) => {
   }
 };
 
-const VenueServiceList = ({ onVenueAdded }) => {
+const VenueServiceList = ({ refreshKey }) => {
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedVenueId, setSelectedVenueId] = useState(null);
+  const toastRef = useRef(new Set());
 
   const fetchVenues = async () => {
     try {
@@ -57,10 +58,12 @@ const VenueServiceList = ({ onVenueAdded }) => {
       }
       const userId = decoded.sub;
 
+      console.log("Fetching venues for user:", userId);
       const response = await axios.get(`http://localhost:8085/venues/user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      console.log("Venues response:", response.data);
       if (!Array.isArray(response.data)) {
         throw new Error("Invalid response format from venues endpoint.");
       }
@@ -75,7 +78,11 @@ const VenueServiceList = ({ onVenueAdded }) => {
         error.message ||
         "Error fetching your venues.";
       setError(message);
-      toast.error(message);
+      if (!toastRef.current.has(message)) {
+        toast.error(message);
+        toastRef.current.add(message);
+        setTimeout(() => toastRef.current.delete(message), 5000);
+      }
     } finally {
       setLoading(false);
     }
@@ -105,14 +112,9 @@ const VenueServiceList = ({ onVenueAdded }) => {
   };
 
   useEffect(() => {
+    console.log("Fetching venues due to mount or refreshKey:", refreshKey);
     fetchVenues();
-  }, []);
-
-  useEffect(() => {
-    if (onVenueAdded) {
-      fetchVenues();
-    }
-  }, [onVenueAdded]);
+  }, [refreshKey]);
 
   if (loading) {
     return (

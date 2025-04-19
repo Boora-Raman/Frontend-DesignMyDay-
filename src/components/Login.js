@@ -31,15 +31,22 @@ const Login = () => {
         password,
       });
 
+      console.log("Login response:", response.data);
       if (response.status === 200 && response.data.token) {
         toast.success(response.data.message || "Login successful");
         sessionStorage.setItem("jwt", response.data.token);
-        sessionStorage.setItem("name", response.data.name);
+        sessionStorage.setItem("name", response.data.name || name);
         navigate("/profile");
+      } else {
+        throw new Error("Invalid response from server");
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Invalid credentials or server error");
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Invalid credentials or server error";
+      toast.error(message);
     }
   };
 

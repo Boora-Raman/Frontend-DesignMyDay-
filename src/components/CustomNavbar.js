@@ -15,8 +15,8 @@ const CustomNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  const userName = sessionStorage.getItem("name")?.trim();
-  const isLoggedIn = !!userName && userName !== "null";
+  const userName = sessionStorage.getItem("name")?.trim() || "User";
+  const isLoggedIn = !!sessionStorage.getItem("jwt") && userName !== "null";
 
   const toggle = () => setIsOpen(!isOpen);
 
