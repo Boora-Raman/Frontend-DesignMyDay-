@@ -84,3 +84,66 @@ body {
   transform: translateY(20px);
   transition: opacity 300ms ease-in, transform 300ms ease-in;
 }
+
+/* src/index.css */
+:root {
+  --primary: #4B0082;
+  --secondary: #800080;
+  --light-gray: #f8f9fa;
+  --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+  font-family: 'Roboto', sans-serif;
+}
+
+.card, .modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: var(--shadow);
+}
+
+.btn-primary {
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  border: none;
+  border-radius: 25px;
+  padding: 10px 20px;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(to right, var(--secondary), var(--primary));
+}
+
+.list-group-item {
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: #f8f9fa;
+}
+
+.modal-header {
+  border-radius: 15px 15px 0 0;
+}
+
+/* Animations */
+.fade-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms ease-in, transform 300ms ease-in;
+}
+
+.fade-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 300ms ease-in, transform 300ms ease-in;
+}

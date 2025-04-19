@@ -61,14 +61,21 @@ const VenueServiceList = ({ onVenueAdded }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const fetchedVenues = Array.isArray(response.data) ? response.data : [];
-      setVenues(fetchedVenues);
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid response format from venues endpoint.");
+      }
+
+      setVenues(response.data);
       setError("");
     } catch (error) {
       console.error("Error fetching user venues:", error);
       setVenues([]);
-      setError(error.response?.data?.message || error.message || "Error fetching your venues.");
-      toast.error(error.message || "Error fetching venues.");
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Error fetching your venues.";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -84,8 +91,12 @@ const VenueServiceList = ({ onVenueAdded }) => {
       await fetchVenues();
     } catch (error) {
       console.error("Error deleting service:", error);
-      setError("Failed to delete service.");
-      toast.error("Failed to delete service.");
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete service.";
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -203,7 +214,7 @@ const VenueServiceList = ({ onVenueAdded }) => {
                                         {service.serviceName}
                                       </p>
                                       <p className="mb-1 small">
-                                        <strong>Price:</strong> ₹{service.servicePrice.toFixed(2)}
+                                        <strong>Price:</strong> ₹{service.servicePrice?.toFixed(2) || "N/A"}
                                       </p>
                                       <p className="mb-0 small">
                                         <strong>Description:</strong>{" "}
