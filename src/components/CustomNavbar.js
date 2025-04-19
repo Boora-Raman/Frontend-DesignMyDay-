@@ -8,66 +8,67 @@ import {
   Collapse,
   Button,
 } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const CustomNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const toggle = () => setIsOpen(!isOpen);
+  const navigate = useNavigate();
 
   const userName = sessionStorage.getItem("name")?.trim();
-  const userImage = sessionStorage.getItem("image")?.trim();
+  const isLoggedIn = !!userName && userName !== "null";
 
-  // Valid login check
-  const isLoggedIn =
-    Boolean(userName && userImage && userName !== "null" && userImage !== "null");
+  const toggle = () => setIsOpen(!isOpen);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("jwt");
+    sessionStorage.removeItem("name");
+    toast.success("Logged out successfully");
+    navigate("/login");
+    setIsOpen(false);
+  };
 
   return (
-    <Navbar color="light" light expand="md" className="px-4 shadow-sm">
-      <NavbarBrand tag={Link} to="/" className="fw-bold" style={{ fontSize: "1.5rem" }}>
-        DesignMyDay!
+    <Navbar color="light" light expand="md" className="px-4">
+      <NavbarBrand tag={Link} to="/" className="fw-bold text-primary" style={{ fontSize: "1.8rem" }}>
+        DesignMyDay
       </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
         <Nav className="me-auto" navbar>
           <NavItem>
-            <Link className="nav-link" to="/">Home</Link>
-          </NavItem>
-
-          {/* <Route path="/addVenues" element={<AddVenueForm />} />
-        <Route path="/getVenues" element={<VenueServiceList />} /> */}
-
-        <NavItem>
-            <Link className="nav-link" to="/addVenues"> Add Venues</Link>
-          </NavItem>       
-
-          <NavItem>
-            <Link className="nav-link" to="/getVenues">Venues</Link>
+            <Link to="/" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
+              Home
+            </Link>
           </NavItem>
           <NavItem>
-            <Link className="nav-link" to="/about">About Us</Link>
+            <Link to="/addVenues" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
+              Add Venues
+            </Link>
           </NavItem>
           <NavItem>
-            <Link className="nav-link" to="/contact">Contact Us</Link>
+            <Link to="/getVenues" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
+              Venues
+            </Link>
+          </NavItem>
+          <NavItem>
+            <Link to="/about" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
+              About Us
+            </Link>
+          </NavItem>
+          <NavItem>
+            <Link to="/contact" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
+              Contact Us
+            </Link>
           </NavItem>
         </Nav>
-
         {isLoggedIn ? (
-          <Link
-            to="/dashboard"
-            className="d-flex align-items-center gap-2 text-decoration-none text-dark"
-          >
-            <img
-              src={userImage}
-              alt="User"
-              style={{
-                width: "35px",
-                height: "35px",
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
-            />
-            <span className="fw-semibold">{userName}</span>
-          </Link>
+          <div className="d-flex align-items-center">
+            <span className="me-3 fw-semibold text-dark">{userName}</span>
+            <Button color="danger" size="sm" onClick={handleLogout}>
+              Logout
+            </Button>
+          </div>
         ) : (
           <Button color="primary" tag={Link} to="/login">
             Login

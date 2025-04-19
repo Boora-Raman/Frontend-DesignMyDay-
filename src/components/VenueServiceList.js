@@ -1,147 +1,253 @@
 import React, { useEffect, useState } from "react";
+import {
+  Container,
+  Card,
+  CardBody,
+  CardTitle,
+  Button,
+  ListGroup,
+  ListGroupItem,
+  Row,
+  Col,
+  Spinner,
+  Alert,
+} from "reactstrap";
 import axios from "axios";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
+import AddServiceModal from "./AddServiceModel";
+import { toast } from "react-toastify";
+import { CSSTransition } from "react-transition-group";
 
-const VenueServiceList = () => {
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("Error decoding JWT:", error);
+    return null;
+  }
+};
+
+const VenueServiceList = ({ onVenueAdded }) => {
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchVenues();
-  }, []);
+  const [error, setError] = useState("");
+  const [selectedVenueId, setSelectedVenueId] = useState(null);
 
   const fetchVenues = async () => {
     try {
-      const token = sessionStorage.getItem('jwt');
+      const token = sessionStorage.getItem("jwt");
       if (!token) {
-        throw new Error('You must be logged in to view venues.');
+        throw new Error("You must be logged in to view your venues.");
       }
 
-      const response = await axios.get("http://localhost:8085/venues", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const decoded = decodeJWT(token);
+      if (!decoded || !decoded.sub) {
+        throw new Error("Invalid token: user ID not found.");
+      }
+      const userId = decoded.sub;
+
+      const response = await axios.get(`http://localhost:8085/venues/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log('Fetched venues:', response.data);
-      setVenues(response.data);
-      setError('');
+      const fetchedVenues = Array.isArray(response.data) ? response.data : [];
+      setVenues(fetchedVenues);
+      setError("");
     } catch (error) {
-      console.error("Error fetching venues:", error);
-      setError(error.message || "Error fetching venues. Please check your authentication or try again.");
+      console.error("Error fetching user venues:", error);
+      setVenues([]);
+      setError(error.response?.data?.message || error.message || "Error fetching your venues.");
+      toast.error(error.message || "Error fetching venues.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDeleteService = async (venueId, serviceId) => {
+    try {
+      const token = sessionStorage.getItem("jwt");
+      await axios.delete(`http://localhost:8085/venues/${venueId}/services/${serviceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Service removed successfully!");
+      await fetchVenues();
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      setError("Failed to delete service.");
+      toast.error("Failed to delete service.");
+    }
+  };
+
+  const handleShowInVR = (venueId) => {
+    toast.info(`VR view for venue ${venueId} is not implemented yet.`);
+  };
+
+  useEffect(() => {
+    fetchVenues();
+  }, []);
+
+  useEffect(() => {
+    if (onVenueAdded) {
+      fetchVenues();
+    }
+  }, [onVenueAdded]);
+
   if (loading) {
-    return <div className="text-center mt-10 text-gray-600">Loading venues...</div>;
+    return (
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <Spinner color="primary" />
+      </Container>
+    );
   }
 
   if (error) {
-    return <div className="text-center mt-10 text-red-600">{error}</div>;
+    return (
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <Alert color="danger">{error}</Alert>
+      </Container>
+    );
   }
 
   return (
-    <div className="flex flex-col items-center px-4 py-6 space-y-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">
-        Venues and Services
-      </h1>
-
-      {venues.length === 0 && (
-        <p className="text-gray-500">No venues available.</p>
-      )}
-
-      {venues.map((venue) => (
-        <div
-          key={venue.venueId}
-          className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 border border-gray-200"
-        >
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Carousel Section */}
-            <div className="w-full lg:w-1/2">
-              <Swiper
-                spaceBetween={10}
-                navigation={true}
-                modules={[Navigation]}
-                className="rounded-xl overflow-hidden"
-              >
-                {venue.images && venue.images.length > 0 ? (
-                  venue.images.map((img, idx) => (
-                    <SwiperSlide key={img.imgid || idx}>
-                      <img
-                        src={`http://localhost:8085/api/images/${img.imgName}`}
-                        alt={`${venue.venueName} ${idx + 1}`}
-                        className="h-64 w-full object-cover"
-                        onError={(e) => {
-                          console.error(`Failed to load image: ${img.imgName}`);
-                          e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                        }}
-                      />
-                    </SwiperSlide>
-                  ))
-                ) : (
-                  <SwiperSlide>
-                    <img
-                      src="https://via.placeholder.com/400x300?text=No+Image"
-                      alt="Placeholder for venue"
-                      className="h-64 w-full object-cover"
-                    />
-                  </SwiperSlide>
-                )}
-              </Swiper>
-            </div>
-
-            {/* Venue Info Section */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-blue-800 mb-2">
-                  {venue.venueName}
-                </h2>
-                <p className="text-gray-600 mb-1">
-                  <strong>Venue ID:</strong> {venue.venueId}
-                </p>
-                <p className="text-gray-600 mb-1">
-                  <strong>Address:</strong> {venue.venueAddress}
-                </p>
-              </div>
-            </div>
+    <Container className="py-5">
+      <CSSTransition in={true} timeout={300} classNames="fade" unmountOnExit>
+        <div>
+          <div className="d-flex justify-content-between align-items-center mb-5">
+            <h2 className="text-primary fw-bold">Your Venues</h2>
+            <Button color="primary" onClick={fetchVenues}>
+              Refresh Venues
+            </Button>
           </div>
-
-          {/* Services Card */}
-          <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-4">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              Services Offered:
-            </h3>
-            {venue.services && venue.services.length > 0 ? (
-              <ul className="space-y-3">
-                {venue.services.map((service) => (
-                  <li
-                    key={service.serviceId}
-                    className="border-b pb-2 border-gray-200"
-                  >
-                    <p className="font-medium text-blue-700">{service.serviceName}</p>
-                    <p className="text-gray-600 text-sm">
-                      <strong>Price:</strong> ₹{service.servicePrice.toFixed(2)}
-                    </p>
-                    <p className="text-gray-600 text-sm">
-                      <strong>Description:</strong>{" "}
-                      {service.serviceDescription || "No description provided"}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No services listed for this venue.</p>
-            )}
-          </div>
+          {venues.length === 0 ? (
+            <Alert color="info" className="text-center">
+              No venues listed. Add a venue to get started!
+            </Alert>
+          ) : (
+            <Row>
+              {venues.map((venue) => (
+                <Col md="12" key={venue.venueId} className="mb-4">
+                  <Card>
+                    <CardBody className="p-4">
+                      <Row>
+                        <Col md="4">
+                          <Swiper
+                            spaceBetween={10}
+                            navigation={true}
+                            modules={[Navigation]}
+                            className="rounded"
+                            style={{ height: "200px" }}
+                          >
+                            {venue.images && venue.images.length > 0 ? (
+                              venue.images.map((img, idx) => (
+                                <SwiperSlide key={img.imgid || idx}>
+                                  <img
+                                    src={`http://localhost:8085/api/images/${img.imgName}`}
+                                    alt={`${venue.venueName} view ${idx + 1}`}
+                                    className="w-100 h-100 object-cover"
+                                    onError={(e) => (e.target.src = "/placeholder-image.jpg")}
+                                  />
+                                </SwiperSlide>
+                              ))
+                            ) : (
+                              <SwiperSlide>
+                                <img
+                                  src="/placeholder-image.jpg"
+                                  alt={`${venue.venueName} placeholder`}
+                                  className="w-100 h-100 object-cover"
+                                />
+                              </SwiperSlide>
+                            )}
+                          </Swiper>
+                        </Col>
+                        <Col md="8">
+                          <CardTitle tag="h4" className="text-primary fw-bold mb-3">
+                            {venue.venueName}
+                          </CardTitle>
+                          <p className="mb-2">
+                            <strong>Address:</strong> {venue.venueAddress || "N/A"}
+                          </p>
+                          <p className="mb-2">
+                            <strong>Price:</strong> ₹{venue.venuePrice?.toFixed(2) || "N/A"}
+                          </p>
+                          <div className="bg-light p-3 rounded mb-3">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <h5 className="fw-semibold">Services Offered</h5>
+                              <Button
+                                color="success"
+                                size="sm"
+                                onClick={() => setSelectedVenueId(venue.venueId)}
+                              >
+                                Add Services
+                              </Button>
+                            </div>
+                            {venue.services && venue.services.length > 0 ? (
+                              <ListGroup>
+                                {venue.services.map((service) => (
+                                  <ListGroupItem
+                                    key={service.serviceId}
+                                    className="d-flex justify-content-between align-items-center"
+                                  >
+                                    <div>
+                                      <p className="mb-1 fw-semibold text-primary">
+                                        {service.serviceName}
+                                      </p>
+                                      <p className="mb-1 small">
+                                        <strong>Price:</strong> ₹{service.servicePrice.toFixed(2)}
+                                      </p>
+                                      <p className="mb-0 small">
+                                        <strong>Description:</strong>{" "}
+                                        {service.serviceDescription || "No description"}
+                                      </p>
+                                    </div>
+                                    <Button
+                                      color="danger"
+                                      size="sm"
+                                      onClick={() => handleDeleteService(venue.venueId, service.serviceId)}
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </Button>
+                                  </ListGroupItem>
+                                ))}
+                              </ListGroup>
+                            ) : (
+                              <p className="text-muted">No services listed.</p>
+                            )}
+                          </div>
+                          <Button
+                            color="primary"
+                            onClick={() => handleShowInVR(venue.venueId)}
+                          >
+                            Show in VR
+                          </Button>
+                        </Col>
+                      </Row>
+                    </CardBody>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+          {selectedVenueId && (
+            <AddServiceModal
+              venueId={selectedVenueId}
+              onClose={() => setSelectedVenueId(null)}
+              onServicesAdded={fetchVenues}
+            />
+          )}
         </div>
-      ))}
-    </div>
+      </CSSTransition>
+    </Container>
   );
 };
 

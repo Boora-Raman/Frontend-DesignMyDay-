@@ -7,14 +7,15 @@ import {
   Button,
   Spinner,
   Alert,
+  Row,
+  Col,
   ListGroup,
   ListGroupItem,
-  Row,
-  Col
 } from "reactstrap";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { CSSTransition } from "react-transition-group";
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
@@ -27,7 +28,7 @@ const UserProfile = () => {
       try {
         const token = sessionStorage.getItem("jwt");
         if (!token) {
-          toast.error("No authentication token found. Please log in.");
+          toast.error("Please log in to view your profile.");
           navigate("/login");
           return;
         }
@@ -59,12 +60,12 @@ const UserProfile = () => {
           } else if (err.response.status === 400) {
             setError("Invalid or expired token.");
           } else {
-            setError("Failed to load user details. Please try again.");
+            setError("Failed to load user details.");
           }
         } else if (err.message.includes("Network Error")) {
-          setError("Network error. Please check if the backend server is running or CORS is configured correctly.");
+          setError("Network error. Please check your connection.");
         } else {
-          setError("An unexpected error occurred. Please try again.");
+          setError("An unexpected error occurred.");
         }
         setLoading(false);
       }
@@ -106,75 +107,77 @@ const UserProfile = () => {
 
   return (
     <Container className="py-5">
-      <Card className="shadow-lg mx-auto" style={{ maxWidth: "800px" }}>
-        <CardBody className="p-4">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <img
-              src={
-                user?.images?.imgName
-                  ? `http://localhost:8085/api/images/${encodeURIComponent(user.images.imgName)}`
-                  : "https://via.placeholder.com/100"
-              }
-              alt="Profile"
-              className="rounded-circle border border-primary"
-              style={{ width: "100px", height: "100px", objectFit: "cover" }}
-              onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
-            />
-            <Button color="danger" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
-          <CardTitle tag="h4" className="text-center text-primary fw-bold mb-4">
-            User Profile
-          </CardTitle>
-          <Row className="mb-4">
-            <Col md="6">
-              <p>
-                <strong>User ID:</strong> {user?.userId}
-              </p>
-              <p>
-                <strong>Username:</strong> {user?.name}
-              </p>
-            </Col>
-            <Col md="6">
-              <p>
-                <strong>Email:</strong> {user?.email}
-              </p>
-              <p>
-                <strong>Password:</strong> ********
-              </p>
-            </Col>
-          </Row>
-          <div className="d-flex justify-content-center gap-3 mb-4">
-            <Button color="primary" onClick={handleEditDetails}>
-              Edit Details
-            </Button>
-            <Button color="success" onClick={handleUpdatePassword}>
-              Update Password
-            </Button>
-          </div>
-          <h5 className="text-primary fw-bold mb-3">Venues</h5>
-          {user?.venues && user.venues.length > 0 ? (
-            <ListGroup>
-              {user.venues.map((venue, index) => (
-                <ListGroupItem key={index} className="mb-2 border rounded">
-                  <p>
-                    <strong>Name:</strong> {venue.name}
-                  </p>
-                  <p>
-                    <strong>Location:</strong> {venue.location}
-                  </p>
-                  <p>
-                    <strong>Capacity:</strong> {venue.capacity}
-                  </p>
-                </ListGroupItem>
-              ))}
-            </ListGroup>
-          ) : (
-            <p className="text-muted">No venues associated with this user.</p>
-          )}
-        </CardBody>
-      </Card>
+      <CSSTransition in={true} timeout={300} classNames="fade" unmountOnExit>
+        <Card className="mx-auto" style={{ maxWidth: "700px" }}>
+          <CardBody className="p-5">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <img
+                src={
+                  user?.images?.imgName
+                    ? `http://localhost:8085/api/images/${encodeURIComponent(user.images.imgName)}`
+                    : "https://via.placeholder.com/100"
+                }
+                alt="Profile"
+                className="rounded-circle border border-primary"
+                style={{ width: "100px", height: "100px", objectFit: "cover" }}
+                onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
+              />
+              <Button color="danger" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
+            <CardTitle tag="h3" className="text-center text-primary fw-bold mb-4">
+              User Profile
+            </CardTitle>
+            <Row className="mb-4">
+              <Col md="6">
+                <p className="mb-2">
+                  <strong>User ID:</strong> {user?.userId || "N/A"}
+                </p>
+                <p className="mb-2">
+                  <strong>Username:</strong> {user?.name || "N/A"}
+                </p>
+              </Col>
+              <Col md="6">
+                <p className="mb-2">
+                  <strong>Email:</strong> {user?.email || "N/A"}
+                </p>
+                <p className="mb-2">
+                  <strong>Password:</strong> ********
+                </p>
+              </Col>
+            </Row>
+            <div className="d-flex justify-content-center gap-3 mb-4">
+              <Button color="primary" onClick={handleEditDetails}>
+                Edit Details
+              </Button>
+              <Button color="success" onClick={handleUpdatePassword}>
+                Update Password
+              </Button>
+            </div>
+            <h4 className="text-primary fw-bold mb-3">Venues</h4>
+            {user?.venues && user.venues.length > 0 ? (
+              <ListGroup>
+                {user.venues.map((venue, index) => (
+                  <ListGroupItem key={index} className="mb-2">
+                    <p className="mb-1">
+                      <strong>Name:</strong> {venue.name || "N/A"}
+                    </p>
+                    <p className="mb-1">
+                      <strong>Location:</strong> {venue.location || "N/A"}
+                    </p>
+                    <p className="mb-1">
+                      <strong>Capacity:</strong> {venue.capacity || "N/A"}
+                    </p>
+                  </ListGroupItem>
+                ))}
+              </ListGroup>
+            ) : (
+              <p className="text-muted text-center">No venues associated with this user.</p>
+            )}
+          </CardBody>
+        </Card>
+      </CSSTransition>
     </Container>
   );
 };

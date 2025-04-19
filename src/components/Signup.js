@@ -1,19 +1,19 @@
-// src/components/Signup.js
 import React, { useState } from "react";
 import {
   Container,
+  Card,
+  CardBody,
+  CardTitle,
   Form,
   FormGroup,
   Label,
   Input,
   Button,
-  Card,
-  CardBody,
-  CardTitle,
 } from "reactstrap";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { CSSTransition } from "react-transition-group";
 
 const Signup = () => {
   const [user, setUser] = useState({
@@ -48,57 +48,66 @@ const Signup = () => {
   };
 
   return (
-    <Container className="mt-5">
-      <Card className="shadow-lg rounded">
-        <CardBody>
-          <CardTitle tag="h3" className="text-center mb-4">
-            Sign Up
-          </CardTitle>
-          <Form onSubmit={handleSignup}>
-            <FormGroup>
-              <Label>Name</Label>
-              <Input
-                type="text"
-                name="name"
-                required
-                value={user.name}
-                onChange={handleChange}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                name="email"
-                required
-                value={user.email}
-                onChange={handleChange}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Password</Label>
-              <Input
-                type="password"
-                name="password"
-                required
-                value={user.password}
-                onChange={handleChange}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Profile Image</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImage(e.target.files[0])}
-              />
-            </FormGroup>
-            <Button color="success" block>
-              Register
-            </Button>
-          </Form>
-        </CardBody>
-      </Card>
+    <Container className="d-flex justify-content-center align-items-center vh-100">
+      <CSSTransition in={true} timeout={300} classNames="fade" unmountOnExit>
+        <Card style={{ maxWidth: "400px", width: "100%" }}>
+          <CardBody className="p-5">
+            <CardTitle tag="h4" className="text-center text-primary fw-bold mb-4">
+              Sign Up
+            </CardTitle>
+            <Form onSubmit={handleSignup}>
+              <FormGroup>
+                <Label for="name" className="fw-semibold">Name</Label>
+                <Input
+                  type="text"
+                  name="name"
+                  id="name"
+                  placeholder="Enter your name"
+                  value={user.name}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="email" className="fw-semibold">Email</Label>
+                <Input
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="Enter your email"
+                  value={user.email}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="password" className="fw-semibold">Password</Label>
+                <Input
+                  type="password"
+                  name="password"
+                  id="password"
+                  placeholder="Enter your password"
+                  value={user.password}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="image" className="fw-semibold">Profile Image</Label>
+                <Input
+                  type="file"
+                  id="image"
+                  accept="image/*"
+                  onChange={(e) => setImage(e.target.files[0])}
+                />
+              </FormGroup>
+              <Button color="primary" block className="mt-3">
+                Register
+              </Button>
+            </Form>
+          </CardBody>
+        </Card>
+      </CSSTransition>
     </Container>
   );
 };
