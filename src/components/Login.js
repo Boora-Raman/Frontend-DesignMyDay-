@@ -1,83 +1,103 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Container,
+  Card,
+  CardBody,
+  CardTitle,
   Form,
   FormGroup,
   Label,
   Input,
   Button,
-  Card,
-  CardBody,
+  Row,
+  Col,
 } from "reactstrap";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { CSSTransition } from "react-transition-group";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");  // <-- changed from 'name' to 'email'
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+
     try {
-      const loginResponse = await axios.post("http://localhost:8085/login", {
-        email,
+      const response = await axios.post("http://localhost:8085/login", {
+        email,         // <-- sending email instead of name
         password,
       });
-      const token = loginResponse.data.token;
-      sessionStorage.setItem("jwt", token);
 
-      // Fetch username from token
-      const usernameResponse = await axios.get(`http://localhost:8085/username/${token}`);
-      const username = usernameResponse.data;
-
-      // Fetch user details to get userId
-      const userResponse = await axios.get(`http://localhost:8085/users/name/${username}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userId = userResponse.data.userId;
-      sessionStorage.setItem("userId", userId);
-
-      toast.success("Login successful!");
-      navigate("/profile");
+      console.log("Login response:", response.data);
+      if (response.status === 200 && response.data.token) {
+        toast.success(response.data.message || "Login successful");
+        sessionStorage.setItem("jwt", response.data.token);
+        sessionStorage.setItem("email", response.data.email || email); // <-- store email
+        navigate("/profile");
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (error) {
-      toast.error(error.response?.data?.error || "Login failed");
+      console.error("Login error:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Invalid credentials or server error";
+      toast.error(message);
     }
   };
 
   return (
-    <Container className="mt-5">
-      <Card className="shadow">
-        <CardBody>
-          <h2 className="text-center mb-4">Login</h2>
-          <Form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label for="email">Email</Label>
-              <Input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label for="password">Password</Label>
-              <Input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </FormGroup>
-            <Button color="primary" type="submit" block>
+    <Container className="d-flex justify-content-center align-items-center vh-100">
+      <CSSTransition in={true} timeout={300} classNames="fade" unmountOnExit>
+        <Card style={{ maxWidth: "400px", width: "100%" }}>
+          <CardBody className="p-5">
+            <CardTitle tag="h4" className="text-center text-primary fw-bold mb-4">
               Login
-            </Button>
-          </Form>
-        </CardBody>
-      </Card>
+            </CardTitle>
+            <Form onSubmit={handleLogin}>
+              <FormGroup>
+                <Label for="email" className="fw-semibold">Email</Label> {/* <-- changed Label */}
+                <Input
+                  type="email"   // <-- changed Input type
+                  id="email"
+                  placeholder="Enter your email"  // <-- changed placeholder
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="password" className="fw-semibold">Password</Label>
+                <Input
+                  type="password"
+                  id="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </FormGroup>
+              <Button color="primary" block className="mt-3">
+                Login
+              </Button>
+              <Row className="mt-3">
+                <Col className="text-center">
+                  <a
+                    href="/signup"
+                    className="text-primary text-decoration-none"
+                  >
+                    Don’t have an account? Sign up
+                  </a>
+                </Col>
+              </Row>
+            </Form>
+          </CardBody>
+        </Card>
+      </CSSTransition>
     </Container>
   );
 };
