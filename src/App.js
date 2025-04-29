@@ -10,7 +10,7 @@ import AddVenueForm from "./components/AddVenueForm";
 import VenueServiceList from "./components/VenueServiceList";
 import AddCarterForm from "./components/AddCarterForm";
 import AddVendorForm from "./components/AddVendorForm";
-import VendorList from "./components/VendorList";
+import VendorServiceList from "./components/VendorServiceList";
 import CarterServiceList from "./components/CarterServiceList";
 import { CSSTransition } from "react-transition-group";
 
@@ -37,7 +37,7 @@ function App() {
             <Route path="/addCarters" element={<AddCarterForm onCarterAdded={handleItemAdded} />} />
             <Route path="/getCarters" element={<CarterServiceList refreshKey={refreshKey} />} />
             <Route path="/addVendor" element={<AddVendorForm onVendorAdded={handleItemAdded} />} />
-            <Route path="/vendorList" element={<VendorList refreshKey={refreshKey} />} />
+            <Route path="/vendorList" element={<VendorServiceList refreshKey={refreshKey} />} />
           </Routes>
         </CSSTransition>
       </div>

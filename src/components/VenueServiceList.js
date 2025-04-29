@@ -186,57 +186,7 @@ const VenueServiceList = ({ refreshKey }) => {
                             <strong>Price:</strong> ₹
                             {venue.venuePrice?.toFixed(2) || "N/A"}
                           </p>
-                          <div className="bg-light p-3 rounded mb-3">
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                              <h5 className="fw-semibold">Services Offered</h5>
-                              <Button
-                                color="success"
-                                size="sm"
-                                onClick={() => {
-                                  /* Add service modal logic */
-                                }}
-                              >
-                                Add Services
-                              </Button>
-                            </div>
-                            {venue.services && venue.services.length > 0 ? (
-                              <ListGroup>
-                                {venue.services.map((service) => (
-                                  <ListGroupItem
-                                    key={service.serviceId}
-                                    className="d-flex justify-content-between align-items-center"
-                                  >
-                                    <div>
-                                      <p className="mb-1 fw-semibold text-primary">
-                                        {service.serviceName}
-                                      </p>
-                                      <p className="mb-1 small">
-                                        <strong>Price:</strong> ₹
-                                        {service.servicePrice?.toFixed(2) ||
-                                          "N/A"}
-                                      </p>
-                                      <p className="mb-0 small">
-                                        <strong>Description:</strong>{" "}
-                                        {service.serviceDescription ||
-                                          "No description"}
-                                      </p>
-                                    </div>
-                                    <Button
-                                      color="danger"
-                                      size="sm"
-                                      onClick={() => {
-                                        /* Delete service logic */
-                                      }}
-                                    >
-                                      <i className="bi bi-trash"></i>
-                                    </Button>
-                                  </ListGroupItem>
-                                ))}
-                              </ListGroup>
-                            ) : (
-                              <p className="text-muted">No services listed.</p>
-                            )}
-                          </div>
+                          
                           <div className="d-flex gap-2">
                             <Button
                               color="primary"

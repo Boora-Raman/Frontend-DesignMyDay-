@@ -17,6 +17,8 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8085";
+
 const UserProfile = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ const UserProfile = () => {
         }
 
         // Step 1: Get username from token
-        const usernameResponse = await axios.get(`http://localhost:8085/username/${token}`, {
+        const usernameResponse = await axios.get(`${API_BASE_URL}/username/${token}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -45,11 +47,14 @@ const UserProfile = () => {
 
         // Step 2: Get user details by username
         const userResponse = await axios.get(
-          `http://localhost:8085/users/name/${encodeURIComponent(username)}`,
+          `${API_BASE_URL}/users/name/${encodeURIComponent(username)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setUser(userResponse.data);
+        const userData = userResponse.data;
+        // Log bookings to debug missing vendor/carter names
+        console.log("User bookings:", userData.bookings);
+        setUser(userData);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching user dashboard:", err);
@@ -95,7 +100,7 @@ const UserProfile = () => {
     try {
       const token = sessionStorage.getItem("jwt");
       await axios.put(
-        `http://localhost:8085/bookings/${bookingId}/cancel`,
+        `${API_BASE_URL}/bookings/cancel/${bookingId}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -105,7 +110,7 @@ const UserProfile = () => {
       // Refresh user data to update booking status
       const username = user.name;
       const userResponse = await axios.get(
-        `http://localhost:8085/users/name/${encodeURIComponent(username)}`,
+        `${API_BASE_URL}/users/name/${encodeURIComponent(username)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUser(userResponse.data);
@@ -140,7 +145,7 @@ const UserProfile = () => {
               <img
                 src={
                   user?.profileImagePath
-                    ? `http://localhost:8085/api/images/${encodeURIComponent(user.profileImagePath)}`
+                    ? `${API_BASE_URL}/api/images/${encodeURIComponent(user.profileImagePath)}`
                     : "https://via.placeholder.com/100"
                 }
                 alt="Profile"
@@ -195,13 +200,13 @@ const UserProfile = () => {
                     <p className="mb-1">
                       <strong>Vendors:</strong>{" "}
                       {booking.vendors?.length > 0
-                        ? booking.vendors.map((v) => v.name || "Unknown").join(", ")
+                        ? booking.vendors.map((v) => v.vendorName || "Unknown Vendor").join(", ")
                         : "None"}
                     </p>
                     <p className="mb-1">
                       <strong>Carters:</strong>{" "}
                       {booking.carters?.length > 0
-                        ? booking.carters.map((c) => c.name || "Unknown").join(", ")
+                        ? booking.carters.map((c) => c.carterName || "Unknown Carter").join(", ")
                         : "None"}
                     </p>
                     <p className="mb-1">

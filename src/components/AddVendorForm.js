@@ -46,7 +46,6 @@ const AddVendorForm = ({ onVendorAdded }) => {
           [
             JSON.stringify({
               vendorName,
-              vendorContact,
               vendorSpecialties: specialtiesArray,
               description,
               price: price ? parseFloat(price) : null, // Convert to number

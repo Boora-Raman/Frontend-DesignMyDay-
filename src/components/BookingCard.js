@@ -13,6 +13,8 @@ import {
 import axios from "axios";
 import { toast } from "react-toastify";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8085";
+
 const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess }) => {
   const [stage, setStage] = useState("carters");
   const [carters, setCarters] = useState([]);
@@ -26,12 +28,18 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
     try {
       setLoading(true);
       const token = sessionStorage.getItem("jwt");
-      const response = await axios.get("http://localhost:8085/carters", {
+      if (!token) {
+        throw new Error("You must be logged in to fetch carters.");
+      }
+      const response = await axios.get(`${API_BASE_URL}/carters`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid response format from carters endpoint.");
+      }
       setCarters(response.data);
-      if (!response.data.every((carter) => carter.name && carter.id)) {
-        console.warn("Some carters are missing 'name' or 'id' fields");
+      if (!response.data.every((carter) => carter.carterId && carter.carterName)) {
+        console.warn("Some carters are missing 'carterId' or 'carterName' fields");
       }
     } catch (err) {
       console.error("Error fetching carters:", err);
@@ -46,12 +54,18 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
     try {
       setLoading(true);
       const token = sessionStorage.getItem("jwt");
-      const response = await axios.get("http://localhost:8085/vendors", {
+      if (!token) {
+        throw new Error("You must be logged in to fetch vendors.");
+      }
+      const response = await axios.get(`${API_BASE_URL}/vendors`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid response format from vendors endpoint.");
+      }
       setVendors(response.data);
-      if (!response.data.every((vendor) => vendor.name && vendor.id)) {
-        console.warn("Some vendors are missing 'name' or 'id' fields");
+      if (!response.data.every((vendor) => vendor.vendorId && vendor.vendorName)) {
+        console.warn("Some vendors are missing 'vendorId' or 'vendorName' fields");
       }
     } catch (err) {
       console.error("Error fetching vendors:", err);
@@ -64,16 +78,16 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
 
   const handleSelectCarter = (carter) => {
     setSelectedCarters((prev) =>
-      prev.some((c) => c.id === carter.id)
-        ? prev.filter((c) => c.id !== carter.id)
+      prev.some((c) => c.carterId === carter.carterId)
+        ? prev.filter((c) => c.carterId !== carter.carterId)
         : [...prev, carter]
     );
   };
 
   const handleSelectVendor = (vendor) => {
     setSelectedVendors((prev) =>
-      prev.some((v) => v.id === vendor.id)
-        ? prev.filter((v) => v.id !== vendor.id)
+      prev.some((v) => v.vendorId === vendor.vendorId)
+        ? prev.filter((v) => v.vendorId !== vendor.vendorId)
         : [...prev, vendor]
     );
   };
@@ -87,11 +101,19 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
       }
 
       const bookingDate = new Date().toISOString().split("T")[0];
-      const vendorIds = selectedVendors.map((v) => v.id);
-      const carterIds = selectedCarters.map((c) => c.id);
+      const vendorIds = selectedVendors
+        .map((v) => v.vendorId)
+        .filter((id) => id != null); // Filter out null or undefined IDs
+      const carterIds = selectedCarters
+        .map((c) => c.carterId)
+        .filter((id) => id != null); // Filter out null or undefined IDs
+
+      if (!venueId) {
+        throw new Error("Venue ID is required.");
+      }
 
       await axios.post(
-        "http://localhost:8085/bookings",
+        `${API_BASE_URL}/bookings`,
         {
           venueId,
           bookingDate,
@@ -107,7 +129,7 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
       onClose();
     } catch (err) {
       console.error("Error confirming booking:", err.response || err);
-      const message = err.response?.data?.error || "Failed to confirm booking.";
+      const message = err.response?.data || "Failed to confirm booking.";
       setError(message);
       toast.error(message);
     } finally {
@@ -144,12 +166,12 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
               ) : (
                 carters.map((carter, index) => (
                   <ListGroupItem
-                    key={carter.id || `carter-${index}`}
+                    key={carter.carterId || `carter-${index}`}
                     className="d-flex justify-content-between align-items-center"
                   >
                     <div>
                       <p className="mb-1 fw-semibold text-primary">
-                        {carter.name || "Unnamed Carter"}
+                        {carter.carterName || "Unnamed Carter"}
                       </p>
                       <p className="mb-1 small">
                         <strong>Price:</strong> ₹
@@ -157,21 +179,21 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
                       </p>
                       <p className="mb-0 small">
                         <strong>Specialties:</strong>{" "}
-                        {carter.specialties?.length > 0
-                          ? carter.specialties.join(", ")
+                        {carter.carterSpecialties?.length > 0
+                          ? carter.carterSpecialties.join(", ")
                           : "None"}
                       </p>
                     </div>
                     <Button
                       color={
-                        selectedCarters.some((c) => c.id === carter.id)
+                        selectedCarters.some((c) => c.carterId === carter.carterId)
                           ? "danger"
                           : "success"
                       }
                       size="sm"
                       onClick={() => handleSelectCarter(carter)}
                     >
-                      {selectedCarters.some((c) => c.id === carter.id)
+                      {selectedCarters.some((c) => c.carterId === carter.carterId)
                         ? "Remove"
                         : "Add"}
                     </Button>
@@ -189,12 +211,12 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
               ) : (
                 vendors.map((vendor, index) => (
                   <ListGroupItem
-                    key={vendor.id || `vendor-${index}`}
+                    key={vendor.vendorId || `vendor-${index}`}
                     className="d-flex justify-content-between align-items-center"
                   >
                     <div>
                       <p className="mb-1 fw-semibold text-primary">
-                        {vendor.name || "Unnamed Vendor"}
+                        {vendor.vendorName || "Unnamed Vendor"}
                       </p>
                       <p className="mb-1 small">
                         <strong>Price:</strong> ₹
@@ -202,21 +224,21 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
                       </p>
                       <p className="mb-0 small">
                         <strong>Specialties:</strong>{" "}
-                        {vendor.specialties?.length > 0
-                          ? vendor.specialties.join(", ")
+                        {vendor.vendorSpecialties?.length > 0
+                          ? vendor.vendorSpecialties.join(", ")
                           : "None"}
                       </p>
                     </div>
                     <Button
                       color={
-                        selectedVendors.some((v) => v.id === vendor.id)
+                        selectedVendors.some((v) => v.vendorId === vendor.vendorId)
                           ? "danger"
                           : "success"
                       }
                       size="sm"
                       onClick={() => handleSelectVendor(vendor)}
                     >
-                      {selectedVendors.some((v) => v.id === vendor.id)
+                      {selectedVendors.some((v) => v.vendorId === vendor.vendorId)
                         ? "Remove"
                         : "Add"}
                     </Button>
