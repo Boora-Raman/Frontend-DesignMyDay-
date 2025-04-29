@@ -9,6 +9,9 @@ import {
   ListGroupItem,
   Spinner,
   Alert,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -21,6 +24,8 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
   const [vendors, setVendors] = useState([]);
   const [selectedCarters, setSelectedCarters] = useState([]);
   const [selectedVendors, setSelectedVendors] = useState([]);
+  const [bookingDate, setBookingDate] = useState("");
+  const [dateError, setDateError] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -92,7 +97,27 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
     );
   };
 
+  const validateBookingDate = () => {
+    if (!bookingDate) {
+      setDateError("Booking date is required.");
+      return false;
+    }
+    const selectedDate = new Date(bookingDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time for comparison
+    if (selectedDate < today) {
+      setDateError("Booking date cannot be in the past.");
+      return false;
+    }
+    setDateError("");
+    return true;
+  };
+
   const handleConfirmBooking = async () => {
+    if (!validateBookingDate()) {
+      return;
+    }
+
     try {
       setLoading(true);
       const token = sessionStorage.getItem("jwt");
@@ -100,13 +125,12 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
         throw new Error("No token found. Please log in.");
       }
 
-      const bookingDate = new Date().toISOString().split("T")[0];
       const vendorIds = selectedVendors
         .map((v) => v.vendorId)
-        .filter((id) => id != null); // Filter out null or undefined IDs
+        .filter((id) => id != null);
       const carterIds = selectedCarters
         .map((c) => c.carterId)
-        .filter((id) => id != null); // Filter out null or undefined IDs
+        .filter((id) => id != null);
 
       if (!venueId) {
         throw new Error("Venue ID is required.");
@@ -140,7 +164,7 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
   useEffect(() => {
     if (stage === "carters") {
       fetchCarters();
-    } else {
+    } else if (stage === "vendors") {
       fetchVendors();
     }
   }, [stage]);
@@ -202,7 +226,7 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
               )}
             </ListGroup>
           </div>
-        ) : (
+        ) : stage === "vendors" ? (
           <div>
             <h5 className="fw-semibold mb-3">Select Vendors</h5>
             <ListGroup>
@@ -247,6 +271,48 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
               )}
             </ListGroup>
           </div>
+        ) : (
+          <div>
+            <h5 className="fw-semibold mb-3">Confirm Booking Details</h5>
+            <FormGroup>
+              <Label for="bookingDate" className="fw-semibold">
+                Booking Date
+              </Label>
+              <Input
+                type="date"
+                id="bookingDate"
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+                required
+                min={new Date().toISOString().split("T")[0]} // Prevent past dates
+              />
+              {dateError && <Alert color="danger" className="mt-2">{dateError}</Alert>}
+            </FormGroup>
+            <h6 className="mt-3">Selected Carters:</h6>
+            <ListGroup className="mb-3">
+              {selectedCarters.length === 0 ? (
+                <ListGroupItem>No carters selected.</ListGroupItem>
+              ) : (
+                selectedCarters.map((carter) => (
+                  <ListGroupItem key={carter.carterId}>
+                    {carter.carterName} (₹{carter.price?.toFixed(2) || "N/A"})
+                  </ListGroupItem>
+                ))
+              )}
+            </ListGroup>
+            <h6>Selected Vendors:</h6>
+            <ListGroup className="mb-3">
+              {selectedVendors.length === 0 ? (
+                <ListGroupItem>No vendors selected.</ListGroupItem>
+              ) : (
+                selectedVendors.map((vendor) => (
+                  <ListGroupItem key={vendor.vendorId}>
+                    {vendor.vendorName} (₹{vendor.price?.toFixed(2) || "N/A"})
+                  </ListGroupItem>
+                ))
+              )}
+            </ListGroup>
+          </div>
         )}
       </ModalBody>
       <ModalFooter>
@@ -255,15 +321,24 @@ const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess
             Previous
           </Button>
         )}
+        {stage === "confirm" && (
+          <Button color="secondary" onClick={() => setStage("vendors")}>
+            Previous
+          </Button>
+        )}
         {stage === "carters" ? (
           <Button color="primary" onClick={() => setStage("vendors")}>
+            Next
+          </Button>
+        ) : stage === "vendors" ? (
+          <Button color="primary" onClick={() => setStage("confirm")}>
             Next
           </Button>
         ) : (
           <Button
             color="primary"
             onClick={handleConfirmBooking}
-            disabled={loading}
+            disabled={loading || !!dateError}
           >
             Confirm Booking
           </Button>
