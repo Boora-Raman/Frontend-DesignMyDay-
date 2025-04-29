@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from "react";
 import {
   Container,
-  Card,
-  CardBody,
-  CardTitle,
-  Button,
   Spinner,
   Alert,
   Row,
   Col,
   ListGroup,
   ListGroupItem,
+  Button,
+  Badge,
 } from "reactstrap";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
+import { FaMapMarkerAlt, FaMoneyBillWave, FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8085";
 
@@ -28,6 +27,8 @@ const UserProfile = () => {
   useEffect(() => {
     const fetchUserDashboard = async () => {
       try {
+        const name = sessionStorage.getItem("name");
+        
         const token = sessionStorage.getItem("jwt");
         if (!token) {
           toast.error("Please log in to view your profile.");
@@ -36,24 +37,18 @@ const UserProfile = () => {
         }
 
         // Step 1: Get username from token
-        const usernameResponse = await axios.get(`${API_BASE_URL}/username/${token}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const username = usernameResponse.data;
-        if (!username) {
+        if (!name) {
           throw new Error("Username not found in token response");
         }
 
         // Step 2: Get user details by username
         const userResponse = await axios.get(
-          `${API_BASE_URL}/users/name/${encodeURIComponent(username)}`,
+          `${API_BASE_URL}/users/name/${encodeURIComponent(name)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const userData = userResponse.data;
-        // Log bookings to debug missing vendor/carter names
-        console.log("User bookings:", userData.bookings);
+        console.log("User bookings:", userData.bookings); // Debug bookings data
         setUser(userData);
         setLoading(false);
       } catch (err) {
@@ -83,17 +78,11 @@ const UserProfile = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem("jwt");
+    sessionStorage.removeItem("email");
     sessionStorage.removeItem("name");
+    
     toast.success("Logged out successfully");
     navigate("/login");
-  };
-
-  const handleEditDetails = () => {
-    navigate("/edit-profile");
-  };
-
-  const handleUpdatePassword = () => {
-    navigate("/update-password");
   };
 
   const handleCancelBooking = async (bookingId) => {
@@ -107,7 +96,6 @@ const UserProfile = () => {
         }
       );
       toast.success("Booking cancelled successfully!");
-      // Refresh user data to update booking status
       const username = user.name;
       const userResponse = await axios.get(
         `${API_BASE_URL}/users/name/${encodeURIComponent(username)}`,
@@ -139,9 +127,9 @@ const UserProfile = () => {
   return (
     <Container className="py-5">
       <CSSTransition in={true} timeout={300} classNames="fade" unmountOnExit>
-        <Card className="mx-auto" style={{ maxWidth: "700px" }}>
-          <CardBody className="p-5">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="bg-light rounded-3 p-4 shadow-sm">
+          <Row className="align-items-center mb-4">
+            <Col xs="auto">
               <img
                 src={
                   user?.profileImagePath
@@ -150,95 +138,109 @@ const UserProfile = () => {
                 }
                 alt="Profile"
                 className="rounded-circle border border-primary"
-                style={{ width: "100px", height: "100px", objectFit: "cover" }}
+                style={{ width: "80px", height: "80px", objectFit: "cover" }}
                 onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
               />
-              <Button color="danger" onClick={handleLogout}>
+            </Col>
+            <Col>
+              <h2 className="text-primary fw-bold mb-0">{user?.name || "N/A"} </h2>
+              {/* <p className="text-muted mb-0">{user?.email || "No email provided"}</p> */}
+            </Col>
+            <Col xs="auto">
+              <Button color="danger" size="sm" onClick={handleLogout}>
                 Logout
               </Button>
-            </div>
-            <CardTitle tag="h3" className="text-center text-primary fw-bold mb-4">
-              User Profile
-            </CardTitle>
-            <Row className="mb-4">
-              <Col md="6">
+            </Col>
+          </Row>
+
+          <Row className="mb-4">
+            <Col md="12">
+              <div className="bg-white p-3 rounded-3 shadow-sm">
+                <h5 className="text-primary fw-bold mb-3">Profile Details</h5>
                 <p className="mb-2">
                   <strong>User ID:</strong> {user?.userId || "N/A"}
                 </p>
                 <p className="mb-2">
                   <strong>Username:</strong> {user?.name || "N/A"}
                 </p>
-              </Col>
-              <Col md="6">
                 <p className="mb-2">
                   <strong>Email:</strong> {user?.email || "N/A"}
                 </p>
-                <p className="mb-2">
-                  <strong>Password:</strong> ********
-                </p>
-              </Col>
-            </Row>
-            <div className="d-flex justify-content-center gap-3 mb-4">
-              <Button color="primary" onClick={handleEditDetails}>
-                Edit Details
-              </Button>
-              <Button color="success" onClick={handleUpdatePassword}>
-                Update Password
-              </Button>
-            </div>
-            <h4 className="text-primary fw-bold mb-3">Booked Venues</h4>
-            {user?.bookings && user.bookings.length > 0 ? (
-              <ListGroup>
-                {user.bookings.map((booking) => (
-                  <ListGroupItem key={booking.bookingId} className="mb-2">
-                    <p className="mb-1">
-                      <strong>Booking ID:</strong> {booking.bookingId || "N/A"}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Venue:</strong> {booking.venue?.venueName || "N/A"}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Vendors:</strong>{" "}
-                      {booking.vendors?.length > 0
-                        ? booking.vendors.map((v) => v.vendorName || "Unknown Vendor").join(", ")
-                        : "None"}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Carters:</strong>{" "}
-                      {booking.carters?.length > 0
-                        ? booking.carters.map((c) => c.carterName || "Unknown Carter").join(", ")
-                        : "None"}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Total Price:</strong> ₹
-                      {booking.totalPrice?.toFixed(2) || "N/A"}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Booking Date:</strong>{" "}
-                      {booking.bookingDate
-                        ? new Date(booking.bookingDate).toLocaleDateString()
-                        : "N/A"}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Status:</strong> {booking.status || "N/A"}
-                    </p>
-                    {booking.status === "Pending" && (
-                      <Button
-                        color="danger"
-                        size="sm"
-                        onClick={() => handleCancelBooking(booking.bookingId)}
-                      >
-                        Cancel Booking
-                      </Button>
-                    )}
-                  </ListGroupItem>
-                ))}
-              </ListGroup>
-            ) : (
-              <p className="text-muted text-center">No venues booked yet.</p>
-            )}
-          </CardBody>
-        </Card>
+              </div>
+            </Col>
+          </Row>
+
+          <h4 className="text-primary fw-bold mb-3">Your Bookings</h4>
+          {user?.bookings && user.bookings.length > 0 ? (
+            <ListGroup>
+              {user.bookings.map((booking) => (
+                <ListGroupItem
+                  key={booking.bookingId}
+                  className="mb-3 p-3 bg-white rounded-3 shadow-sm"
+                >
+                  <Row>
+                    <Col md="8">
+                      <p className="mb-1">
+                        <FaMapMarkerAlt className="me-2 text-primary" />
+                        <strong>Venue:</strong> {booking.venue?.venueName || "N/A"}
+                      </p>
+                      <p className="mb-1">
+                        <FaInfoCircle className="me-2 text-primary" />
+                        <strong>Booking ID:</strong> {booking.bookingId || "N/A"}
+                      </p>
+                      <p className="mb-1">
+                        <strong>Vendors:</strong>{" "}
+                        {booking.vendors?.length > 0
+                          ? booking.vendors.map((v) => v.vendorName || "Unknown Vendor").join(", ")
+                          : "None"}
+                      </p>
+                      <p className="mb-1">
+                        <strong>Carters:</strong>{" "}
+                        {booking.carters?.length > 0
+                          ? booking.carters.map((c) => c.carterName || "Unknown Carter").join(", ")
+                          : "None"}
+                      </p>
+                      <p className="mb-1">
+                        <FaMoneyBillWave className="me-2 text-primary" />
+                        <strong>Total Price:</strong> ₹{booking.totalPrice?.toFixed(2) || "N/A"}
+                      </p>
+                      <p className="mb-1">
+                        <FaCalendarAlt className="me-2 text-primary" />
+                        <strong>Booking Date:</strong>{" "}
+                        {booking.bookingDate
+                          ? new Date(booking.bookingDate).toLocaleDateString()
+                          : "N/A"}
+                      </p>
+                      <p className="mb-1">
+                        <strong>Status:</strong>{" "}
+                        <Badge
+                          color={booking.status === "Pending" ? "warning" : "secondary"}
+                        >
+                          {booking.status || "N/A"}
+                        </Badge>
+                      </p>
+                    </Col>
+                    <Col md="4" className="d-flex align-items-center justify-content-end">
+                      {booking.status === "Pending" && (
+                        <Button
+                          color="danger"
+                          size="sm"
+                          onClick={() => handleCancelBooking(booking.bookingId)}
+                        >
+                          Cancel Booking
+                        </Button>
+                      )}
+                    </Col>
+                  </Row>
+                </ListGroupItem>
+              ))}
+            </ListGroup>
+          ) : (
+            <Alert color="info" className="text-center">
+              No venues booked yet. Start planning your event!
+            </Alert>
+          )}
+        </div>
       </CSSTransition>
     </Container>
   );

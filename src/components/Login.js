@@ -17,8 +17,10 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 
+const API_BASE_URL = "http://localhost:8085";
+
 const Login = () => {
-  const [email, setEmail] = useState("");  // <-- changed from 'name' to 'email'
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
@@ -26,16 +28,27 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:8085/login", {
-        email,         // <-- sending email instead of name
+      const response = await axios.post(`${API_BASE_URL}/login`, {
+        email,
         password,
       });
 
       console.log("Login response:", response.data);
       if (response.status === 200 && response.data.token) {
+        const token = response.data.token;
+        sessionStorage.setItem("jwt", token);
+        sessionStorage.setItem("email", response.data.email || email);
+
+        // Fetch username using /username/{token}
+        const usernameResponse = await axios.get(`${API_BASE_URL}/username/${token}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const username = usernameResponse.data;
+        if (username) {
+          sessionStorage.setItem("name", username);
+        }
+
         toast.success(response.data.message || "Login successful");
-        sessionStorage.setItem("jwt", response.data.token);
-        sessionStorage.setItem("email", response.data.email || email); // <-- store email
         navigate("/profile");
       } else {
         throw new Error("Invalid response from server");
@@ -60,11 +73,11 @@ const Login = () => {
             </CardTitle>
             <Form onSubmit={handleLogin}>
               <FormGroup>
-                <Label for="email" className="fw-semibold">Email</Label> {/* <-- changed Label */}
+                <Label for="email" className="fw-semibold">Email</Label>
                 <Input
-                  type="email"   // <-- changed Input type
+                  type="email"
                   id="email"
-                  placeholder="Enter your email"  // <-- changed placeholder
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
