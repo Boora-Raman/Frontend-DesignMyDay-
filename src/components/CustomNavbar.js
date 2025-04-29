@@ -1,80 +1,61 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Navbar,
   NavbarBrand,
   Nav,
   NavItem,
-  NavbarToggler,
-  Collapse,
+  NavLink,
   Button,
 } from "reactstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const CustomNavbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-
-  const userName = sessionStorage.getItem("name")?.trim() || "User";
-  const isLoggedIn = !!sessionStorage.getItem("jwt") && userName !== "null";
-
-  const toggle = () => setIsOpen(!isOpen);
+  const isLoggedIn = !!sessionStorage.getItem("jwt");
 
   const handleLogout = () => {
     sessionStorage.removeItem("jwt");
-    sessionStorage.removeItem("name");
-    toast.success("Logged out successfully");
+    sessionStorage.removeItem("userId");
+    toast.success("Logged out successfully!");
     navigate("/login");
-    setIsOpen(false);
   };
 
   return (
-    <Navbar color="light" light expand="md" className="px-4">
-      <NavbarBrand tag={Link} to="/" className="fw-bold text-primary" style={{ fontSize: "1.8rem" }}>
-        DesignMyDay
-      </NavbarBrand>
-      <NavbarToggler onClick={toggle} />
-      <Collapse isOpen={isOpen} navbar>
-        <Nav className="me-auto" navbar>
-          <NavItem>
-            <Link to="/" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
-              Home
-            </Link>
-          </NavItem>
-          <NavItem>
-            <Link to="/addVenues" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
-              Add Venues
-            </Link>
-          </NavItem>
-          <NavItem>
-            <Link to="/getVenues" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
-              Venues
-            </Link>
-          </NavItem>
-          <NavItem>
-            <Link to="/about" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
-              About Us
-            </Link>
-          </NavItem>
-          <NavItem>
-            <Link to="/contact" className="nav-link text-dark" onClick={() => setIsOpen(false)}>
-              Contact Us
-            </Link>
-          </NavItem>
-        </Nav>
+    <Navbar color="dark" dark expand="md" className="mb-4">
+      <NavbarBrand href="/">DesignMyDay</NavbarBrand>
+      <Nav className="ms-auto" navbar>
+        <NavItem>
+          <NavLink href="/venues">Venues</NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="/vendors">Vendors</NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="/carters">Caterers</NavLink>
+        </NavItem>
         {isLoggedIn ? (
-          <div className="d-flex align-items-center">
-            <span className="me-3 fw-semibold text-dark">{userName}</span>
-            <Button color="danger" size="sm" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
+          <>
+            <NavItem>
+              <NavLink href="/profile">Profile</NavLink>
+            </NavItem>
+            <NavItem>
+              <Button color="danger" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </NavItem>
+          </>
         ) : (
-          <Button color="primary" tag={Link} to="/login">
-            Login
-          </Button>
+          <>
+            <NavItem>
+              <NavLink href="/login">Login</NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink href="/signup">Signup</NavLink>
+            </NavItem>
+          </>
         )}
-      </Collapse>
+      </Nav>
     </Navbar>
   );
 };

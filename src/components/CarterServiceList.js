@@ -6,7 +6,6 @@ import {
   Card,
   CardBody,
   CardTitle,
-  Button,
   Spinner,
 } from "reactstrap";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -16,54 +15,24 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 
-const VenueServiceList = ({ refreshKey }) => {
-  const [venues, setVenues] = useState([]);
+const CarterServiceList = ({ refreshKey }) => {
+  const [carters, setCarters] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const token = sessionStorage.getItem("jwt");
-  const userId = sessionStorage.getItem("userId");
 
   useEffect(() => {
-    const fetchVenues = async () => {
+    const fetchCarters = async () => {
       try {
-        const response = await axios.get("http://localhost:8085/venues");
-        setVenues(response.data);
+        const response = await axios.get("http://localhost:8085/carters");
+        setCarters(response.data);
         setLoading(false);
       } catch (error) {
-        toast.error("Failed to fetch venues");
+        toast.error("Failed to fetch caterers");
         setLoading(false);
       }
     };
-    fetchVenues();
+    fetchCarters();
   }, [refreshKey]);
-
-  const handleBook = async (venueId) => {
-    if (!token || !userId) {
-      toast.error("Please login to book a venue");
-      navigate("/login");
-      return;
-    }
-
-    try {
-      await axios.post(
-        "http://localhost:8085/bookings",
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            userId,
-            venueId,
-            bookingDate: new Date().toISOString().split("T")[0],
-          },
-        }
-      );
-      toast.success("Booking created successfully!");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create booking");
-    }
-  };
 
   if (loading) {
     return (
@@ -75,10 +44,10 @@ const VenueServiceList = ({ refreshKey }) => {
 
   return (
     <Container className="mt-5">
-      <h2 className="mb-4">Venues</h2>
+      <h2 className="mb-4">Caterers</h2>
       <Row>
-        {venues.map((venue) => (
-          <Col md="4" key={venue.venueId} className="mb-4">
+        {carters.map((carter) => (
+          <Col md="4" key={carter.carterId} className="mb-4">
             <Card className="shadow">
               <Swiper
                 modules={[Navigation, Pagination]}
@@ -87,12 +56,12 @@ const VenueServiceList = ({ refreshKey }) => {
                 className="mb-3"
                 style={{ height: "200px" }}
               >
-                {venue.images && venue.images.length > 0 ? (
-                  venue.images.map((image) => (
+                {carter.images && carter.images.length > 0 ? (
+                  carter.images.map((image) => (
                     <SwiperSlide key={image.imgid}>
                       <img
                         src={`http://localhost:8085/api/images/${image.imgName}`}
-                        alt={venue.venueName}
+                        alt={carter.carterName}
                         className="img-fluid"
                         style={{ width: "100%", height: "200px", objectFit: "cover" }}
                       />
@@ -110,13 +79,10 @@ const VenueServiceList = ({ refreshKey }) => {
                 )}
               </Swiper>
               <CardBody>
-                <CardTitle tag="h5">{venue.venueName}</CardTitle>
-                <p><strong>Address:</strong> {venue.venueAddress}</p>
-                <p><strong>Price:</strong> ${venue.venuePrice}</p>
-                <p><strong>Services:</strong> {venue.services.map((s) => s.serviceName).join(", ") || "None"}</p>
-                <Button color="primary" onClick={() => handleBook(venue.venueId)}>
-                  Book Now
-                </Button>
+                <CardTitle tag="h5">{carter.carterName}</CardTitle>
+                <p><strong>Contact:</strong> {carter.carterContact}</p>
+                <p><strong>Cuisine:</strong> {carter.carterCuisine}</p>
+                <p><strong>Services:</strong> {carter.services.map((s) => s.serviceName).join(", ") || "None"}</p>
               </CardBody>
             </Card>
           </Col>
@@ -126,4 +92,4 @@ const VenueServiceList = ({ refreshKey }) => {
   );
 };
 
-export default VenueServiceList;
+export default CarterServiceList;
