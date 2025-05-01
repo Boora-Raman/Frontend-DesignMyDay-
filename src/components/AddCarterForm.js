@@ -58,7 +58,7 @@ const AddCarterForm = ({ onCarterAdded }) => {
 
       images.forEach((image) => formData.append("images", image));
 
-      const response = await axios.post("http://localhost:8085/carters", formData, {
+      const response = await axios.post("http://13.53.163.51:8085/carters", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

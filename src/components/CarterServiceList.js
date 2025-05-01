@@ -7,7 +7,7 @@ import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
 import { toast } from "react-toastify";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8085";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://13.53.163.51:8085";
 
 const CarterServiceList = ({ refreshKey }) => {
   const [carters, setCarters] = useState([]);

@@ -50,7 +50,7 @@ const AddVenueForm = ({ onVenueAdded }) => {
       );
       images.forEach((image) => formData.append("images", image));
 
-      await axios.post(`http://localhost:8085/venues`, formData, {
+      await axios.post(`http://13.53.163.51:8085/venues`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

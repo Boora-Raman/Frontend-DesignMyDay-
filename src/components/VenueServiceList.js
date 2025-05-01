@@ -60,7 +60,7 @@ const VenueServiceList = ({ refreshKey }) => {
       const userId = decoded.sub;
 
       console.log("Fetching venues for user:", userId);
-      const response = await axios.get("http://localhost:8085/venues", {
+      const response = await axios.get("http://13.53.163.51:8085/venues", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -151,7 +151,7 @@ const VenueServiceList = ({ refreshKey }) => {
                               venue.images.map((img, idx) => (
                                 <SwiperSlide key={img.imgid || idx}>
                                   <img
-                                    src={`http://localhost:8085/api/images/${img.imgName}`}
+                                    src={`http://13.53.163.51:8085/api/images/${img.imgName}`}
                                     alt={`${venue.venueName} view ${idx + 1}`}
                                     className="w-100 h-100 object-cover"
                                     onError={(e) =>

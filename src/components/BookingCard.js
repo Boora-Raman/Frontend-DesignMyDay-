@@ -16,7 +16,7 @@ import {
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8085";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://13.53.163.51:8085";
 
 const BookingCard = ({ venueId, venueName, venuePrice, onClose, onBookingSuccess }) => {
   const [stage, setStage] = useState("carters");

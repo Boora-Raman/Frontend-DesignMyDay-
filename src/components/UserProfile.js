@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { FaMapMarkerAlt, FaMoneyBillWave, FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8085";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://13.53.163.51:8085";
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);

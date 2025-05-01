@@ -57,7 +57,7 @@ const AddVendorForm = ({ onVendorAdded }) => {
 
       images.forEach((image) => formData.append("images", image));
 
-      const response = await axios.post("http://localhost:8085/vendors", formData, {
+      const response = await axios.post("http://13.53.163.51:8085vendors", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
